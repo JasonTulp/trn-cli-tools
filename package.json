@@ -1,0 +1,12 @@
+{
+    "name": "pallet-id-converter",
+    "version": "1.0.0",
+    "description": "Converts a PalletId into an AccountId",
+    "main": "pid-convert.js",
+    "bin": {
+        "pid-convert": "./pid-convert.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+}
