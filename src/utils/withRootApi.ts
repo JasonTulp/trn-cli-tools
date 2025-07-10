@@ -5,7 +5,7 @@ import { createKeyring, getRootApi, type Signer } from "./";
 
 export async function withRootApi(
 	network: NetworkName | "local",
-	callback: (api: ApiPromise, signer: Signer) => Promise<void>
+	callback: (api: ApiPromise, signer: Signer | null) => Promise<void>
 ) {
 	const [api, signer] = await Promise.all([getRootApi(network), createKeyring()]);
 

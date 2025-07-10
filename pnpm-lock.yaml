@@ -26,6 +26,9 @@ importers:
       '@therootnetwork/api':
         specifier: 1.0.9
         version: 1.0.9(@polkadot/api@10.9.1)
+      '@therootnetwork/api-types':
+        specifier: ^1.1.0
+        version: 1.1.0(@polkadot/types@10.9.1)
       axios:
         specifier: ^1.7.8
         version: 1.10.0
@@ -41,9 +44,6 @@ importers:
       mongodb:
         specifier: ^6.17.0
         version: 6.17.0
-      utils:
-        specifier: link:@/utils
-        version: link:@/utils
     devDependencies:
       '@types/ethereum-checksum-address':
         specifier: ^0.0.2
@@ -333,6 +333,11 @@ packages:
 
   '@substrate/ss58-registry@1.51.0':
     resolution: {integrity: sha512-TWDurLiPxndFgKjVavCniytBIw+t4ViOi7TYp9h/D0NMmkEc9klFTo+827eyEJ0lELpqO207Ey7uGxUa+BS1jQ==}
+
+  '@therootnetwork/api-types@1.1.0':
+    resolution: {integrity: sha512-Ptx4wP2MXTpxB9G0q3A4AxFpAI5vLWJYzlR5j2qYEvv+d7TOI1NnNZk9vK+wVD3bXkTUFQpLXNNvs6o6SDGZ3g==}
+    peerDependencies:
+      '@polkadot/types': ^10.8.1
 
   '@therootnetwork/api@1.0.9':
     resolution: {integrity: sha512-/BY2Peo91/bGjG/ngaFTnhZwH/twB5oqHRG5MgpFdpyfo8w5QSaajQcQG+Q620c0XeszXs+BDIb83RDTQX9l+A==}
@@ -1609,6 +1614,10 @@ snapshots:
     optional: true
 
   '@substrate/ss58-registry@1.51.0': {}
+
+  '@therootnetwork/api-types@1.1.0(@polkadot/types@10.9.1)':
+    dependencies:
+      '@polkadot/types': 10.9.1
 
   '@therootnetwork/api@1.0.9(@polkadot/api@10.9.1)':
     dependencies:

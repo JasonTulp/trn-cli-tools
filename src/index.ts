@@ -2,10 +2,12 @@
 
 import { pidConvert } from './commands/pid-convert';
 import { remark } from './commands/remark';
+import { stakingEvent } from './commands/staking-event';
 
 const COMMANDS = {
     'pid-convert': pidConvert,
     'remark': remark,
+    'staking-event': stakingEvent,
 } as const;
 
 type CommandName = keyof typeof COMMANDS;
@@ -15,12 +17,14 @@ function showHelp(): void {
 Usage: trn <command> [options]
 
 Available commands:
-  pid-convert <palletId>    Convert a PalletId into an AccountId20
-  remark <message>          Echo a message to the console
+  pid-convert <palletId>                    Convert a PalletId into an AccountId20
+  remark <message>                          Echo a message to the console
+  staking-event <account> <start> <end>     Find staking ledger changes between blocks
 
 Examples:
   trn pid-convert txfeepot
   trn remark hello
+  trn staking-event 0xffffffff0000000000000000000000000016cd23 21694991 21733987
 
 Options:
   -h, --help               Show this help message
