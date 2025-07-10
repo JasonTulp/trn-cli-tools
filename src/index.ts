@@ -3,11 +3,21 @@
 import { pidConvert } from './commands/pid-convert';
 import { remark } from './commands/remark';
 import { stakingEvent } from './commands/staking-event';
+import { assetToEvm } from './commands/asset-to-evm';
+import { nftToEvm } from './commands/nft-to-evm';
+import { sftToEvm } from './commands/sft-to-evm';
+import { nftUuid } from './commands/nft-uuid';
+import { dexPoolAddress } from './commands/dex-pool-address';
 
 const COMMANDS = {
     'pid-convert': pidConvert,
     'remark': remark,
     'staking-event': stakingEvent,
+    'asset-to-evm': assetToEvm,
+    'nft-to-evm': nftToEvm,
+    'sft-to-evm': sftToEvm,
+    'nft-uuid': nftUuid,
+    'dex-pool-address': dexPoolAddress,
 } as const;
 
 type CommandName = keyof typeof COMMANDS;
@@ -20,11 +30,21 @@ Available commands:
   pid-convert <palletId>                    Convert a PalletId into an AccountId20
   remark <message>                          Echo a message to the console
   staking-event <account> <start> <end>     Find staking ledger changes between blocks
+  asset-to-evm <assetId>                 Convert asset ID to ERC20 contract address
+  nft-to-evm <collectionId>                 Convert collection ID to ERC721 contract address
+  sft-to-evm <collectionId>                 Convert collection ID to ERC1155 contract address
+  nft-uuid <nextId>                         Convert NFT next ID to collection UUID
+  dex-pool-address <assetA> <assetB>        Get DEX pool address for asset pair
 
 Examples:
   trn pid-convert txfeepot
   trn remark hello
   trn staking-event 0xffffffff0000000000000000000000000016cd23 21694991 21733987
+  trn asset-to-evm 1124
+  trn nft-to-evm 1124
+  trn sft-to-evm 1124
+  trn nft-uuid 12
+  trn dex-pool-address 1 2
 
 Options:
   -h, --help               Show this help message
