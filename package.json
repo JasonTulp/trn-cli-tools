@@ -1,10 +1,10 @@
 {
-    "name": "trn-cli-tools",
+    "name": "trn-tools",
     "version": "1.0.0",
     "description": "A collection of CLI tools for blockchain development",
     "main": "dist/index.js",
     "bin": {
-        "trn-cli": "./dist/index.js"
+        "trn": "./dist/index.js"
     },
     "scripts": {
         "build": "tsc",
@@ -17,11 +17,24 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "ethereum-checksum-address": "^0.0.8"
+        "@polkadot/api": "10.9.1",
+        "@polkadot/keyring": "12.4.2",
+        "@polkadot/types": "10.9.1",
+        "@polkadot/util": "12.4.2",
+        "@polkadot/util-crypto": "12.4.2",
+        "@therootnetwork/api": "1.0.9",
+        "axios": "^1.7.8",
+        "bignumber.js": "^9.1.1",
+        "ethereum-checksum-address": "^0.0.8",
+        "ethers": "^6.7.1",
+        "mongodb": "^6.17.0"
     },
     "devDependencies": {
         "@types/ethereum-checksum-address": "^0.0.2",
         "@types/node": "^22.10.6",
+        "dotenv": "^16.3.1",
+        "eslint": "^8.47.0",
+        "prettier": "^2.8.8",
         "ts-node": "^10.9.2",
         "typescript": "^5.7.3"
     }

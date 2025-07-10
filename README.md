@@ -12,7 +12,7 @@ sudo pnpm install -g
 ## Usage
 
 ```bash
-trn-cli <command> [options]
+trn <command> [options]
 ```
 
 ### Available Commands
@@ -20,13 +20,13 @@ trn-cli <command> [options]
 #### pid-convert
 Convert a PalletId into an AccountId20:
 ```bash
-trn-cli pid-convert txfeepot
+trn pid-convert txfeepot
 ```
 
 #### remark
 Echo a message to the console:
 ```bash
-trn-cli remark hello world
+trn remark hello world
 ```
 
 ### Global Options

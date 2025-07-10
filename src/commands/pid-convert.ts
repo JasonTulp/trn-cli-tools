@@ -2,7 +2,7 @@ import { toChecksumAddress } from 'ethereum-checksum-address';
 
 export function pidConvert(args: string[]): void {
     if (args.length === 0) {
-        console.error("Please provide a PalletId. e.g. 'trn-cli pid-convert txfeepot'");
+        console.error("Please provide a PalletId. e.g. 'trn pid-convert txfeepot'");
         process.exit(1);
     } else if (args.length > 1) {
         console.error("Too many arguments");

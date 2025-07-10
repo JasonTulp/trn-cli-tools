@@ -12,15 +12,15 @@ type CommandName = keyof typeof COMMANDS;
 
 function showHelp(): void {
     console.log(`
-Usage: trn-cli <command> [options]
+Usage: trn <command> [options]
 
 Available commands:
   pid-convert <palletId>    Convert a PalletId into an AccountId20
   remark <message>          Echo a message to the console
 
 Examples:
-  trn-cli pid-convert txfeepot
-  trn-cli remark hello
+  trn pid-convert txfeepot
+  trn remark hello
 
 Options:
   -h, --help               Show this help message
@@ -30,7 +30,7 @@ Options:
 
 function showVersion(): void {
     const packageJson = require('../package.json');
-    console.log(`trn-cli v${packageJson.version}`);
+    console.log(`trn v${packageJson.version}`);
 }
 
 function main(): void {

@@ -1,6 +1,6 @@
 export function remark(args: string[]): void {
     if (args.length === 0) {
-        console.error("Please provide a message. e.g. 'trn-cli remark hello'");
+        console.error("Please provide a message. e.g. 'trn remark hello'");
         process.exit(1);
     }
 
