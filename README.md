@@ -61,6 +61,77 @@ trn staking-event 0xffffffff0000000000000000000000000016cd23 21694991 21733987 -
 **Environment Variables:**
 - `MONGODB_CONNECTION_STRING` - Required for uploading results to MongoDB
 
+#### asset-to-evm
+Convert an asset ID to its ERC20 contract address:
+```bash
+trn asset-to-evm <assetId>
+```
+
+**Arguments:**
+- `assetId` - The asset ID to convert (e.g., 1124)
+
+**Examples:**
+```bash
+trn asset-to-evm 1124
+```
+
+#### nft-to-evm
+Convert a collection ID to its ERC721 contract address:
+```bash
+trn nft-to-evm <collectionId>
+```
+
+**Arguments:**
+- `collectionId` - The collection ID to convert (e.g., 1124)
+
+**Examples:**
+```bash
+trn nft-to-evm 1124
+```
+
+#### sft-to-evm
+Convert a collection ID to its ERC1155 contract address:
+```bash
+trn sft-to-evm <collectionId>
+```
+
+**Arguments:**
+- `collectionId` - The collection ID to convert (e.g., 1124)
+
+**Examples:**
+```bash
+trn sft-to-evm 1124
+```
+
+#### nft-uuid
+Convert an NFT next ID to its collection UUID:
+```bash
+trn nft-uuid <nextId>
+```
+
+**Arguments:**
+- `nextId` - The NFT next ID to convert (e.g., 12)
+
+**Examples:**
+```bash
+trn nft-uuid 12
+```
+
+#### dex-pool-address
+Get the DEX pool address for a pair of assets:
+```bash
+trn dex-pool-address <assetA> <assetB>
+```
+
+**Arguments:**
+- `assetA` - The first asset ID
+- `assetB` - The second asset ID
+
+**Examples:**
+```bash
+trn dex-pool-address 1 2
+```
+
 ### Global Options
 
 - `-h, --help` - Show help message
