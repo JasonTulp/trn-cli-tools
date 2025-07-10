@@ -1,7 +1,7 @@
 {
     "name": "trn-tools",
     "version": "1.0.1",
-    "description": "A collection of CLI tools for blockchain development",
+    "description": "A collection of CLI tools for TRN development",
     "main": "dist/index.js",
     "bin": {
         "trn": "./dist/index.js"
