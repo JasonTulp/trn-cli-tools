@@ -1,15 +1,28 @@
 {
-    "name": "pallet-id-converter",
+    "name": "trn-cli-tools",
     "version": "1.0.0",
-    "description": "Converts a PalletId into an AccountId",
-    "main": "pid-convert.js",
+    "description": "A collection of CLI tools for blockchain development",
+    "main": "dist/index.js",
     "bin": {
-        "pid-convert": "./pid-convert.js"
+        "trn-cli": "./dist/index.js"
+    },
+    "scripts": {
+        "build": "tsc",
+        "postbuild": "chmod +x dist/index.js",
+        "dev": "ts-node src/index.ts",
+        "start": "node dist/index.js",
+        "prepublishOnly": "pnpm run build"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "dependencies": {
         "ethereum-checksum-address": "^0.0.8"
+    },
+    "devDependencies": {
+        "@types/ethereum-checksum-address": "^0.0.2",
+        "@types/node": "^22.10.6",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.7.3"
     }
 }
