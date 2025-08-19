@@ -6,9 +6,21 @@ import { getAddress } from "ethers";
 import * as readline from 'readline';
 import { MongoClient } from 'mongodb';
 import { config } from 'dotenv';
+import pino from 'pino';
 import {Option} from "@polkadot/types";
 
 config();
+
+const logger = pino({
+    transport: {
+        target: 'pino-pretty',
+        options: {
+            colorize: true,
+            translateTime: false,
+            ignore: 'pid,hostname,time'
+        }
+    }
+});
 
 type StakeEvent = {
     type: "bonded" | "unbonded" | "rebonded" | "withdrawn";
@@ -22,11 +34,12 @@ type StakeEvent = {
 
 // Query staking.ledger at a specific block
 async function getStakingLedgerAt(api: ApiPromise, account: HexString, blockNumber: number) {
-    console.log("Getting staking ledger...");
+    // console.log("Getting staking ledger...");
     const blockHash = await api.rpc.chain.getBlockHash(blockNumber);
     const apiAt = await api.at(blockHash);
     // @ts-ignore
     const ledgerOpt: Option<StakingLedger> = await apiAt.query.staking.ledger(account);
+    // console.log(`Finding block: ${blockNumber} hash: ${blockHash.toHex()} account: ${account} ledgerOpt: ${ledgerOpt.isSome ? "found" : "not found"}`);
     return ledgerOpt.isSome ? ledgerOpt.unwrap() as StakingLedger : null;
 }
 
@@ -37,7 +50,6 @@ async function findLedgerChangeBlock(
     startBlock: number,
     endBlock: number
 ): Promise<StakeEvent | null> {
-    console.log("Starting binary search for staking ledger changes...");
     const ledgerStart = await getStakingLedgerAt(api, account, startBlock);
     const ledgerEnd = await getStakingLedgerAt(api, account, endBlock);
 
@@ -46,13 +58,28 @@ async function findLedgerChangeBlock(
         return null;
     }
 
-    console.log(`Checking staking.ledger at start block ${startBlock} Total: ${ledgerStart.total} Active: ${ledgerStart.active}`);
-    console.log(`Checking staking.ledger at end block ${endBlock} Total: ${ledgerEnd.total} Active: ${ledgerEnd.active}`);
+    logger.info({
+        block: startBlock,
+        total: ledgerStart.total.toString(),
+        active: ledgerStart.active.toString()
+    }, `Checking staking.ledger at start block ${startBlock}`);
+
     let transactionType: "bonded" | "unbonded" | "rebonded" | "withdrawn" = "bonded";
     const ledgerEndTotal = ledgerEnd.total.toBn();
     const ledgerStartTotal = ledgerStart.total.toBn();
     const ledgerEndActive = ledgerEnd.active.toBn();
     const ledgerStartActive = ledgerStart.active.toBn();
+
+    logger.info({
+        block: endBlock,
+        total: ledgerEnd.total.toString(),
+        active: ledgerEnd.active.toString()
+    }, `Checking staking.ledger at end block ${endBlock}`);
+    // Log active difference and total difference
+    logger.info({
+        totalDifference: ledgerEndTotal.sub(ledgerStartTotal).toString(),
+        activeDifference: ledgerEndActive.sub(ledgerStartActive).toString()
+    }, `Staking ledger differences between blocks ${startBlock} and ${endBlock}`);
 
     if (ledgerEndTotal > ledgerStartTotal) {
         if (ledgerEndActive > ledgerStartActive) {
@@ -218,13 +245,11 @@ export function stakingEvent(args: string[]): void {
         process.exit(1);
     }
 
-    console.log(`Checking staking.ledger for account: ${account} from block ${startBlock} to ${endBlock}`);
-    console.log(`Hello`);
+    logger.info(`Checking staking.ledger for account: ${account} from block ${startBlock} to ${endBlock}`);
 
     // Execute the main logic
     withRootApi("root", async (api: ApiPromise, signer: any) => {
         try {
-            console.log(`Hello`);
             const stakeEvent = await findLedgerChangeBlock(api, account, startBlock, endBlock);
 
             if (stakeEvent !== null) {

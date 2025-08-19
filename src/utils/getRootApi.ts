@@ -8,6 +8,7 @@ import {
 import "@therootnetwork/api-types";
 
 export async function getRootApi(name: NetworkName | "local") {
+	console.log("Network: ", name);
 	const api = await ApiPromise.create({
 		noInitWarn: true,
 		...getApiOptions(),

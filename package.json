@@ -28,7 +28,9 @@
         "bignumber.js": "^9.1.1",
         "ethereum-checksum-address": "^0.0.8",
         "ethers": "^6.7.1",
-        "mongodb": "^6.17.0"
+        "mongodb": "^6.17.0",
+        "pino": "^9.9.0",
+        "pino-pretty": "^13.1.1"
     },
     "devDependencies": {
         "@types/ethereum-checksum-address": "^0.0.2",
