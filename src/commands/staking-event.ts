@@ -43,63 +43,71 @@ async function getStakingLedgerAt(api: ApiPromise, account: HexString, blockNumb
     return ledgerOpt.isSome ? ledgerOpt.unwrap() as StakingLedger : null;
 }
 
-// Binary search to find where staking.ledger changes
-async function findLedgerChangeBlock(
+// Find all staking ledger changes between blocks
+async function findAllLedgerChanges(
     api: ApiPromise,
     account: HexString,
     startBlock: number,
     endBlock: number
-): Promise<StakeEvent | null> {
+): Promise<StakeEvent[]> {
+    const events: StakeEvent[] = [];
+    
     const ledgerStart = await getStakingLedgerAt(api, account, startBlock);
     const ledgerEnd = await getStakingLedgerAt(api, account, endBlock);
 
     if (!ledgerStart || !ledgerEnd || !ledgerStart.total || !ledgerEnd.total || !ledgerStart.active || !ledgerEnd.active) {
         console.error("Ledger data not found for the specified blocks.");
-        return null;
+        return [];
     }
 
     logger.info({
         block: startBlock,
         total: ledgerStart.total.toString(),
-        active: ledgerStart.active.toString()
+        active: ledgerStart.active.toString(),
     }, `Checking staking.ledger at start block ${startBlock}`);
-
-    let transactionType: "bonded" | "unbonded" | "rebonded" | "withdrawn" = "bonded";
-    const ledgerEndTotal = ledgerEnd.total.toBn();
-    const ledgerStartTotal = ledgerStart.total.toBn();
-    const ledgerEndActive = ledgerEnd.active.toBn();
-    const ledgerStartActive = ledgerStart.active.toBn();
 
     logger.info({
         block: endBlock,
         total: ledgerEnd.total.toString(),
         active: ledgerEnd.active.toString()
     }, `Checking staking.ledger at end block ${endBlock}`);
-    // Log active difference and total difference
-    logger.info({
-        totalDifference: ledgerEndTotal.sub(ledgerStartTotal).toString(),
-        activeDifference: ledgerEndActive.sub(ledgerStartActive).toString()
-    }, `Staking ledger differences between blocks ${startBlock} and ${endBlock}`);
-
-    if (ledgerEndTotal > ledgerStartTotal) {
-        if (ledgerEndActive > ledgerStartActive) {
-            transactionType = "bonded";
-        } else {
-            transactionType = "rebonded";
-        }
-    } else if (ledgerEndTotal < ledgerStartTotal) {
-        // total is less so some was withdrawn
-        transactionType = "withdrawn";
-    } else {
-        // total is equal, must be unbonded
-        transactionType = "unbonded";
-    }
 
     if (JSON.stringify(ledgerStart) === JSON.stringify(ledgerEnd)) {
         console.log("No change in staking.ledger between the given blocks.");
-        return null;
+        return [];
     }
 
+    // Find all change points recursively
+    await findChangePointsRecursively(api, account, startBlock, endBlock, events);
+    
+    return events;
+}
+
+// Recursively find all change points in the range
+async function findChangePointsRecursively(
+    api: ApiPromise,
+    account: HexString,
+    startBlock: number,
+    endBlock: number,
+    events: StakeEvent[]
+): Promise<void> {
+    if (startBlock >= endBlock) {
+        return;
+    }
+
+    const ledgerStart = await getStakingLedgerAt(api, account, startBlock);
+    const ledgerEnd = await getStakingLedgerAt(api, account, endBlock);
+
+    if (!ledgerStart || !ledgerEnd) {
+        return;
+    }
+
+    // If no change in this range, return
+    if (JSON.stringify(ledgerStart) === JSON.stringify(ledgerEnd)) {
+        return;
+    }
+
+    // Binary search to find the first change point
     let left = startBlock;
     let right = endBlock;
 
@@ -114,16 +122,97 @@ async function findLedgerChangeBlock(
         }
     }
 
+    const changeBlock = left;
+    const ledgerAtChange = await getStakingLedgerAt(api, account, changeBlock);
+    
+    if (!ledgerAtChange) {
+        return;
+    }
+
+    // Determine transaction type and amount for this specific change
+    const ledgerChangeTotal = ledgerAtChange.total.toBn();
+    const ledgerStartTotal = ledgerStart.total.toBn();
+    const ledgerChangeActive = ledgerAtChange.active.toBn();
+    const ledgerStartActive = ledgerStart.active.toBn();
+
+    let transactionType: "bonded" | "unbonded" | "rebonded" | "withdrawn" = "bonded";
+    let amount = "0";
+    // Log active difference and total difference
+    logger.info({
+        totalDifference: ledgerChangeTotal.sub(ledgerStartTotal).toString(),
+        activeDifference: ledgerChangeActive.sub(ledgerStartActive).toString()
+    }, `Staking ledger differences between blocks ${startBlock} and ${endBlock}`);
+
+
+    if (ledgerChangeTotal.gt(ledgerStartTotal)) {
+        amount = ledgerChangeTotal.sub(ledgerStartTotal).toString();
+        if (ledgerChangeActive.gt(ledgerStartActive)) {
+            transactionType = "bonded";
+        } else {
+            transactionType = "rebonded";
+        }
+    } else if (ledgerChangeTotal.lt(ledgerStartTotal)) {
+        amount = ledgerStartTotal.sub(ledgerChangeTotal).toString();
+        transactionType = "withdrawn";
+    } else {
+        // total is equal, must be unbonded
+        amount = ledgerStartActive.sub(ledgerChangeActive).toString();
+        transactionType = "unbonded";
+    }
+
+    logger.info({
+        changeBlock,
+        type: transactionType,
+        amount,
+        totalBefore: ledgerStartTotal.toString(),
+        totalAfter: ledgerChangeTotal.toString(),
+        activeBefore: ledgerStartActive.toString(),
+        activeAfter: ledgerChangeActive.toString()
+    }, `Found staking change at block ${changeBlock}`);
+
     const now = new Date();
-    return {
+    events.push({
         type: transactionType,
         account: account,
-        blockNumber: left,
-        amount: ledgerEndTotal.sub(ledgerStartTotal).toString(),
+        blockNumber: changeBlock,
+        amount: amount,
         manualEntry: true,
         createdAt: now,
         updatedAt: now,
-    };
+    });
+
+    // Recursively find more changes in the remaining range
+    await findChangePointsRecursively(api, account, changeBlock, endBlock, events);
+}
+
+// Check if a record already exists in MongoDB
+async function checkRecordExists(stakeEvent: StakeEvent): Promise<boolean> {
+    const connectionString = process.env.MONGODB_CONNECTION_STRING;
+
+    if (!connectionString) {
+        throw new Error("MONGODB_CONNECTION_STRING environment variable is not set");
+    }
+
+    const client = new MongoClient(connectionString);
+
+    try {
+        await client.connect();
+        const db = client.db("trn-staking-mainnet");
+        const collection = db.collection("transactions");
+
+        const existingRecord = await collection.findOne({
+            account: stakeEvent.account,
+            blockNumber: stakeEvent.blockNumber,
+            amount: stakeEvent.amount
+        });
+
+        return existingRecord !== null;
+    } catch (error) {
+        console.error("❌ Error checking record existence:", error);
+        throw error;
+    } finally {
+        await client.close();
+    }
 }
 
 // Upload the entry to the MongoDB database
@@ -250,11 +339,14 @@ export function stakingEvent(args: string[]): void {
     // Execute the main logic
     withRootApi("root", async (api: ApiPromise, signer: any) => {
         try {
-            const stakeEvent = await findLedgerChangeBlock(api, account, startBlock, endBlock);
+            const stakeEvents = await findAllLedgerChanges(api, account, startBlock, endBlock);
 
-            if (stakeEvent !== null) {
-                console.log(`\n\nstaking.ledger missing record:`);
-                console.log(stakeEvent);
+            if (stakeEvents.length > 0) {
+                console.log(`\n\nFound ${stakeEvents.length} staking.ledger change(s):`);
+                stakeEvents.forEach((event, index) => {
+                    console.log(`\nEvent ${index + 1}:`);
+                    console.log(event);
+                });
 
                 if (dryRun) {
                     console.log("\n🔍 Dry run complete - no data uploaded");
@@ -263,16 +355,31 @@ export function stakingEvent(args: string[]): void {
 
                 let shouldUpload = autoUpload;
                 if (!autoUpload) {
-                    const answer = await promptUser("\nDo you want to upload this record to MongoDB? (y/n): ");
+                    const answer = await promptUser(`\nDo you want to upload these ${stakeEvents.length} record(s) to MongoDB? (y/n): `);
                     shouldUpload = answer === 'y' || answer === 'yes';
                 }
 
                 if (shouldUpload) {
                     try {
-                        await uploadToMongoDB(stakeEvent);
-                        console.log("🎉 Record successfully uploaded to database!");
+                        let uploadedCount = 0;
+                        let skippedCount = 0;
+                        
+                        for (const [index, event] of stakeEvents.entries()) {
+                            const exists = await checkRecordExists(event);
+                            
+                            if (exists) {
+                                console.log(`⚠️  Event ${index + 1}/${stakeEvents.length} already exists in database (account: ${event.account}, block: ${event.blockNumber}, amount: ${event.amount}) - skipping`);
+                                skippedCount++;
+                            } else {
+                                await uploadToMongoDB(event);
+                                console.log(`✅ Successfully uploaded event ${index + 1}/${stakeEvents.length} to MongoDB`);
+                                uploadedCount++;
+                            }
+                        }
+                        
+                        console.log(`🎉 Upload complete! ${uploadedCount} new record(s) uploaded, ${skippedCount} duplicate(s) skipped.`);
                     } catch (error) {
-                        console.error("Failed to upload record to database:", error);
+                        console.error("❌ Error uploading to MongoDB:", error);
                         process.exit(1);
                     }
                 } else {
